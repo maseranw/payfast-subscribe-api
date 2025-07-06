@@ -1,0 +1,28 @@
+{
+  "name": "payfast-subscribe-api",
+  "version": "1.0.0",
+  "main": "index.js",
+   "scripts": {
+    "start": "node dist/app.js",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@ngelekanyo/payfast-subscribe": "^1.0.18",
+    "@supabase/supabase-js": "^2.50.3",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.10",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.1",
+    "express": "^5.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
