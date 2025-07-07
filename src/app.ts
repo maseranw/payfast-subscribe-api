@@ -40,6 +40,11 @@ io.on("connection", (socket) => {
     socket.join(userId);
   });
 
+  socket.on("leave_user_room", (userId) => {
+    console.log(`📡 Socket ${socket.id} left the room: ${userId}`);
+    socket.leave(userId);
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ Socket disconnected:", socket.id);
   });
