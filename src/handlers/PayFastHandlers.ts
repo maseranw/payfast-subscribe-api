@@ -45,8 +45,12 @@ export const handleCancel = async (data: CallbackPayload): Promise<void> => {
       });
 
       const io = getSocketIOInstance();
-      io.emit("subscription_cancelled", {
-        subscriptionId: data.subscriptionId,
+      const subId = data.subscriptionId;
+
+      const userId = await supabaseService.getUserIdBySubscriptionId(subId);
+
+      io.to(userId).emit("subscription_cancelled", {
+        subId,
         timestamp: new Date().toISOString(),
       });
 

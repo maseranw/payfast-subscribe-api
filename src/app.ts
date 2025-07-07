@@ -17,7 +17,7 @@ import buildPayfastRouter from "@ngelekanyo/payfast-subscribe";
 import { setSocketIOInstance } from "./socket";
 
 const app: Express = express();
-const server = createServer(app); 
+const server = createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
     origin: [
@@ -33,6 +33,12 @@ setSocketIOInstance(io);
 
 io.on("connection", (socket) => {
   console.log("🔌 Socket connected:", socket.id);
+
+  // NEW: Join user-specific room
+  socket.on("join_user_room", (userId) => {
+    console.log(`📡 Socket ${socket.id} joined room: ${userId}`);
+    socket.join(userId);
+  });
 
   socket.on("disconnect", () => {
     console.log("❌ Socket disconnected:", socket.id);

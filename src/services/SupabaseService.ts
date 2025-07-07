@@ -118,4 +118,26 @@ export class SupabaseService {
 
     return data as Subscription[];
   }
+
+  async getUserIdBySubscriptionId(subscriptionId: string): Promise<string> {
+    if (!subscriptionId) {
+      throw new Error("Subscription ID is required");
+    }
+
+    const { data, error } = await this.supabase
+      .from("subscriptions")
+      .select("user_id")
+      .eq("id", subscriptionId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to fetch user ID: ${error.message}`);
+    }
+
+    if (!data || !data.user_id) {
+      throw new Error("User ID not found for the given subscription");
+    }
+
+    return data.user_id;
+  }
 }
