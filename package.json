@@ -2,7 +2,7 @@
   "name": "payfast-subscribe-api",
   "version": "1.0.0",
   "main": "index.js",
-   "scripts": {
+  "scripts": {
     "start": "node dist/app.js",
     "build": "tsc",
     "dev": "tsc --watch",
@@ -22,6 +22,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
+    "socket.io": "^4.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }

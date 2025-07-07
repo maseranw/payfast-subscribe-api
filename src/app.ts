@@ -2,6 +2,9 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
+import { createServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
+
 import { errorMiddleware } from "./middleware/ErrorMiddleware";
 import {
   handlePaymentCreation,
@@ -11,14 +14,36 @@ import {
   handleFetch,
 } from "./handlers/PayFastHandlers";
 import buildPayfastRouter from "@ngelekanyo/payfast-subscribe";
+import { setSocketIOInstance } from "./socket";
 
 const app: Express = express();
+const server = createServer(app); 
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: [
+      process.env.CLIENT_APP_URL || "http://localhost:5173",
+      process.env.SUPABASE_URL || "https://Project-ID.supabase.co",
+    ],
+    credentials: true,
+  },
+});
+
+// Store it globally
+setSocketIOInstance(io);
+
+io.on("connection", (socket) => {
+  console.log("🔌 Socket connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("❌ Socket disconnected:", socket.id);
+  });
+});
 
 // CORS configuration
 const corsOptions = {
   origin: [
     process.env.CLIENT_APP_URL || "http://localhost:5173",
-    process.env.SUPABASE_URL || "https://Project-ID.supabase.co"
+    process.env.SUPABASE_URL || "https://Project-ID.supabase.co",
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -50,6 +75,6 @@ app.get("/", (req: Request, res: Response) => {
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Test server running on http://localhost:${PORT}`);
 });
