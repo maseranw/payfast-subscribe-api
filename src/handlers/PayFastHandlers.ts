@@ -1,14 +1,16 @@
-import { ITNData, CallbackPayload } from '../interfaces/PayFastInterfaces';
+import { PfData } from '@ngelekanyo/payfast-subscribe';
+import { CallbackPayload } from '../interfaces/PayFastInterfaces';
 import { SupabaseService } from '../services/SupabaseService';
+import { mapPayfastStatusToLocalStatus } from '../services/SubscriptionService';
 
 const supabaseService = new SupabaseService(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
-export const handlePaymentCreation = async (itnData: ITNData): Promise<void> => {
+export const handlePaymentCreation = async (itnData: PfData): Promise<void> => {
   try {
-    console.log('💰 Payment received:', itnData);
+    console.log('Payment received:', itnData);
     if (itnData.payment_status !== 'COMPLETE') {
       throw new Error('Payment not completed');
     }
@@ -46,7 +48,7 @@ export const handleCancel = async (data: CallbackPayload): Promise<void> => {
 
 export const handlePause = async (data: CallbackPayload): Promise<void> => {
   try {
-    console.log('⏸️ Pause callback called:', data);
+    console.log('Pause callback called:', data);
     if (data.status !== 200) {
       throw new Error(`Pause failed with status ${data.status}`);
     }
@@ -63,7 +65,7 @@ export const handlePause = async (data: CallbackPayload): Promise<void> => {
 
 export const handleUnpause = async (data: CallbackPayload): Promise<void> => {
   try {
-    console.log('▶️ Unpause callback called:', data);
+    console.log('Unpause callback called:', data);
     if (data.status !== 200) {
       throw new Error(`Unpause failed with status ${data.status}`);
     }
@@ -80,10 +82,28 @@ export const handleUnpause = async (data: CallbackPayload): Promise<void> => {
 
 export const handleFetch = async (data: CallbackPayload): Promise<void> => {
   try {
-    console.log('📄 Fetch callback called:', data);
+    console.log('Fetch callback called:', data);
     if (data.status !== 200) {
       throw new Error(`Fetch failed with status ${data.status}`);
     }
+
+    const subscriptionResponse = data.payload?.data?.response ?? data.payload?.response ?? data.payload ?? {};
+    const payfastStatus = subscriptionResponse.status;
+    const mappedStatus = mapPayfastStatusToLocalStatus(payfastStatus);
+
+    if (!mappedStatus) {
+      console.error(`Fetch processing skipped: unrecognized PayFast subscription status "${payfastStatus}"`);
+      return;
+    }
+
+    if (!data.token) {
+      throw new Error('PayFast token missing from fetch callback');
+    }
+
+    await supabaseService.updateSubscriptionStatusByToken({
+      payfastToken: data.token,
+      status: mappedStatus,
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     throw new Error(`Fetch processing failed: ${errorMessage}`);

@@ -1,13 +1,15 @@
+export type LocalSubscriptionStatus = 'active' | 'paused' | 'cancelled';
+
 export interface SubscriptionUpdateData {
   subscriptionId: string;
   payfastPaymentId?: string;
   payfastToken?: string;
-  status: 'active' | 'cancelled' | 'paused' | 'pending';
+  status: LocalSubscriptionStatus | 'pending';
 }
 
 export interface SubscriptionUpdateByTokenData {
   payfastToken: string;
-  status: 'active' | 'paused';
+  status: LocalSubscriptionStatus;
 }
 
 export interface Subscription {

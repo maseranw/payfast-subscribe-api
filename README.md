@@ -4,20 +4,20 @@
 
 Express.js API with TypeScript, designed to handle PayFast subscription payments and manage subscription data using Supabase. 
 
-🔗 **Designed to work with [Payfast Subscription Client App](https://github.com/maseranw/payfast-sub-app)**
+**Designed to work with [Payfast Subscription Client App](https://github.com/maseranw/payfast-sub-app)**
 - You can get the database script on the client app.
 
 
-## 📚 Table of Contents
+## Table of Contents
 - [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Installation](#clone-the-repo)
-- [Build & Dev](#️-build-the-project)
+- [Build & Dev](#build-the-project)
 - [Database](#database)
-- [API Endpoints](#-test-the-api-endpoints)
+- [API Endpoints](#test-the-api-endpoints)
 - [Environment Variables](#env-variables)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 - Integrates with PayFast for subscription payment processing.
@@ -43,10 +43,10 @@ cd payfast-subscribe-api
 ## Install dependencies
 npm install
 
-## 🏗️ Build the Project
+## Build the Project
 npm run build
 
-## 🧪 Development Mode
+## Development Mode
 To run TypeScript in watch mode:
 npm run dev
 
@@ -146,18 +146,11 @@ CREATE POLICY "Users can view own subscriptions"
   TO authenticated
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own subscriptions"
-  ON subscriptions
-  FOR UPDATE
-  TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own subscriptions"
+CREATE POLICY "Users can insert own pending subscriptions"
   ON subscriptions
   FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id AND status = 'pending');
 
 /* 5. Create plan_features junction table and RLS policy */
 CREATE TABLE IF NOT EXISTS plan_features (
@@ -194,28 +187,12 @@ WHERE (p.name = 'Basic' AND f.feature_key = 'reverse_text')
 ON CONFLICT (plan_id, feature_id) DO NOTHING;
 
 /* 7. Add payfast_subscription_id column to subscriptions table */
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'subscriptions' AND column_name = 'payfast_subscription_id'
-  ) THEN
-    ALTER TABLE subscriptions ADD COLUMN payfast_subscription_id text;
-    CREATE INDEX IF NOT EXISTS idx_subscriptions_payfast_subscription_id 
-      ON subscriptions(payfast_subscription_id);
-  END IF;
-END $$;
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS payfast_subscription_id text;
+CREATE INDEX IF NOT EXISTS idx_subscriptions_payfast_subscription_id
+  ON subscriptions(payfast_subscription_id);
 
 /* 8. Add updated_at column and trigger to subscriptions table */
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'subscriptions' AND column_name = 'updated_at'
-  ) THEN
-    ALTER TABLE subscriptions ADD COLUMN updated_at timestamptz DEFAULT now();
-  END IF;
-END $$;
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -223,7 +200,7 @@ BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ language 'plpgsql' SET search_path = public;
 
 DROP TRIGGER IF EXISTS update_subscriptions_updated_at ON subscriptions;
 
@@ -279,16 +256,37 @@ BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ language 'plpgsql' SET search_path = public;
 
 CREATE TRIGGER update_contact_messages_updated_at
     BEFORE UPDATE ON contact_messages
     FOR EACH ROW
     EXECUTE FUNCTION update_contact_messages_updated_at();
 
+/* 10. Restrict subscription writes and support pause/resume */
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'subscriptions_status_check'
+  ) THEN
+    ALTER TABLE subscriptions
+      ADD CONSTRAINT subscriptions_status_check
+      CHECK (status IN ('pending', 'active', 'paused', 'cancelled'));
+  END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION cleanup_stale_pending_subscriptions()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM subscriptions
+  WHERE status = 'pending'
+    AND created_at < now() - interval '1 hour';
+END;
+$$ language 'plpgsql' SET search_path = public;
+
 ```
 
-## 🔌 Test the API endpoints (e.g., using Postman or the frontend app):
+## Test the API endpoints (e.g., using Postman or the frontend app):
 
 | Method | Route                                        | Description                                   |
 | ------ | -------------------------------------------- | --------------------------------------------- |
@@ -321,16 +319,16 @@ SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-## 👥 Maintainers
+## Maintainers
 
 - [@ngelekanyo](https://github.com/maseranw) (author & maintainer)
 
-## 🤝 Contributing
+## Contributing
 
 Contributions, suggestions, and issues welcome!  
 Please open an issue or submit a pull request.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.  
 See the [LICENSE](./LICENSE) file for details.

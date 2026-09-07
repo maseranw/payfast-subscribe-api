@@ -4,6 +4,7 @@ import {
   SubscriptionUpdateByTokenData,
   Subscription,
 } from "../interfaces/SupabaseInterfaces";
+import { computeNextBillingDate } from "./SubscriptionService";
 
 export class SupabaseService {
   private supabase: SupabaseClient;
@@ -24,7 +25,6 @@ export class SupabaseService {
       throw new Error("Subscription ID is required");
     }
 
-    // Fetch existing subscription
     const { data: existingSub, error: fetchError } = await this.supabase
       .from("subscriptions")
       .select("*")
@@ -38,10 +38,7 @@ export class SupabaseService {
       throw new Error("Subscription not found");
     }
 
-    // Build update payload
     const currentDate = new Date();
-    const nextBillingDate = new Date(currentDate);
-    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
 
     const updateData: Partial<Subscription> = {
       status,
@@ -54,6 +51,8 @@ export class SupabaseService {
     }
 
     if (status === "active") {
+      const billingCycle = await this.getPlanBillingCycle(existingSub.plan_id);
+      const nextBillingDate = computeNextBillingDate(currentDate, billingCycle);
       updateData.current_period_start = currentDate.toISOString();
       updateData.current_period_end = nextBillingDate.toISOString();
     }
@@ -61,7 +60,6 @@ export class SupabaseService {
       updateData.cancel_at_period_end = true;
     }
 
-    // Update subscription
     const { data: subscriptionData, error: subscriptionError } =
       await this.supabase
         .from("subscriptions")
@@ -87,7 +85,6 @@ export class SupabaseService {
       throw new Error("PayFast token is required");
     }
 
-    // Fetch the subscription by token
     const { data: existingSub, error: fetchError } = await this.supabase
       .from("subscriptions")
       .select("*")
@@ -117,5 +114,23 @@ export class SupabaseService {
     }
 
     return data as Subscription[];
+  }
+
+  private async getPlanBillingCycle(planId?: string): Promise<string | null> {
+    if (!planId) {
+      return null;
+    }
+
+    const { data: plan, error } = await this.supabase
+      .from("subscription_plans")
+      .select("billing_cycle")
+      .eq("id", planId)
+      .maybeSingle();
+
+    if (error || !plan) {
+      return null;
+    }
+
+    return plan.billing_cycle;
   }
 }
