@@ -2,7 +2,7 @@
   "name": "payfast-subscribe-api",
   "version": "1.0.0",
   "main": "dist/app.js",
-   "scripts": {
+  "scripts": {
     "start": "node dist/app.js",
     "build": "tsc",
     "dev": "tsc --watch",
@@ -14,7 +14,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "@ngelekanyo/payfast-subscribe": "^1.0.18",
+    "@ngelekanyo/payfast": "^1.0.1",
     "@supabase/supabase-js": "^2.50.3",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",

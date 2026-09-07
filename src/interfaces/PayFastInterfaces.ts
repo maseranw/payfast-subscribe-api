@@ -20,7 +20,7 @@ export interface CallbackPayload {
   payload: any;
 }
 
-export type PaymentUpdateCallback = (itnData: import('@ngelekanyo/payfast-subscribe').PfData) => Promise<void>;
+export type PaymentUpdateCallback = (itnData: import('@ngelekanyo/payfast/server').PfData) => Promise<void>;
 export type CancelCallback = (data: CallbackPayload) => Promise<void>;
 export type PauseCallback = (data: CallbackPayload) => Promise<void>;
 export type UnpauseCallback = (data: CallbackPayload) => Promise<void>;

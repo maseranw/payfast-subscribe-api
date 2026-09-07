@@ -16,7 +16,7 @@ import {
   handleUnpause,
   handleFetch,
 } from "./handlers/PayFastHandlers";
-import buildPayfastRouter from "@ngelekanyo/payfast-subscribe";
+import buildPayfastRouter from "@ngelekanyo/payfast/server";
 
 const app: Express = express();
 

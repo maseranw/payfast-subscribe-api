@@ -1,4 +1,4 @@
-import { PfData } from '@ngelekanyo/payfast-subscribe';
+import { PfData } from '@ngelekanyo/payfast/server';
 import { CallbackPayload } from '../interfaces/PayFastInterfaces';
 import { SupabaseService } from '../services/SupabaseService';
 import { mapPayfastStatusToLocalStatus } from '../services/SubscriptionService';
