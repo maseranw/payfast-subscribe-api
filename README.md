@@ -48,7 +48,7 @@ To test the full loop locally, run `payfast-sub-app` and this API side by side, 
 
 ### Subscription ownership verification
 
-`/api/payfast/cancel`, `/pause`, `/unpause`, and `/fetch` require an `Authorization: Bearer <supabase-access-token>` header. The request is rejected (401/403/404) unless that session's user is the owner of the subscription tied to the PayFast token in the URL. This requires `@ngelekanyo/payfast/client` consumers to call `setAuthTokenProvider` (see that package's README) so the header is actually sent. `SUPABASE_ANON_KEY` is required at startup for this check to verify sessions.
+`/api/payfast/cancel`, `/pause`, `/unpause`, and `/fetch` require an `Authorization: Bearer <supabase-access-token>` header. The request is rejected (401/403/404) unless that session's user is the owner of the subscription tied to the PayFast token in the URL. `/api/payfast/initiate` requires the same header and is rejected unless the caller owns the subscription row referenced by `m_payment_id` in the request body — this assumes the caller already created that row themselves (e.g. an RLS-restricted `pending` insert) before calling initiate. This requires `@ngelekanyo/payfast/client` consumers to call `setAuthTokenProvider` (see that package's README) so the header is actually sent on every call, including `initiatePayment`. `SUPABASE_ANON_KEY` is required at startup for this check to verify sessions.
 
 ## Prerequisites
 - Node.js (v14 or higher)

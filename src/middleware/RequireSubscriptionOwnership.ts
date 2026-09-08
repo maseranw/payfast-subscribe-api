@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, User } from "@supabase/supabase-js";
 import { SupabaseService } from "../services/SupabaseService";
 
 const supabaseAuthClient = createClient(
@@ -12,15 +12,14 @@ const supabaseService = new SupabaseService(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-export const requireSubscriptionOwnership = async (
+const authenticateRequest = async (
   req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+  res: Response
+): Promise<User | null> => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({ error: "Missing or invalid Authorization header" });
-    return;
+    return null;
   }
 
   const accessToken = authHeader.slice("Bearer ".length);
@@ -30,8 +29,19 @@ export const requireSubscriptionOwnership = async (
 
   if (authError || !userData.user) {
     res.status(401).json({ error: "Invalid or expired session" });
-    return;
+    return null;
   }
+
+  return userData.user;
+};
+
+export const requireSubscriptionOwnership = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const user = await authenticateRequest(req, res);
+  if (!user) return;
 
   const payfastToken = req.params.token;
   if (!payfastToken || typeof payfastToken !== "string") {
@@ -45,7 +55,35 @@ export const requireSubscriptionOwnership = async (
     return;
   }
 
-  if (ownerId !== userData.user.id) {
+  if (ownerId !== user.id) {
+    res.status(403).json({ error: "You do not have access to this subscription" });
+    return;
+  }
+
+  next();
+};
+
+export const requireInitiatePaymentOwnership = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const user = await authenticateRequest(req, res);
+  if (!user) return;
+
+  const subscriptionId = req.body?.m_payment_id;
+  if (!subscriptionId || typeof subscriptionId !== "string") {
+    res.status(400).json({ error: "Missing m_payment_id" });
+    return;
+  }
+
+  const ownerId = await supabaseService.getSubscriptionOwnerById(subscriptionId);
+  if (!ownerId) {
+    res.status(404).json({ error: "Subscription not found" });
+    return;
+  }
+
+  if (ownerId !== user.id) {
     res.status(403).json({ error: "You do not have access to this subscription" });
     return;
   }

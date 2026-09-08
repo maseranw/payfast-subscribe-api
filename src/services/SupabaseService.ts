@@ -130,6 +130,20 @@ export class SupabaseService {
     return data.user_id;
   }
 
+  async getSubscriptionOwnerById(subscriptionId: string): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .from("subscriptions")
+      .select("user_id")
+      .eq("id", subscriptionId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return data.user_id;
+  }
+
   private async getPlanBillingCycle(planId?: string): Promise<string | null> {
     if (!planId) {
       return null;
