@@ -14,7 +14,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "@ngelekanyo/payfast": "^1.0.2",
+    "@ngelekanyo/payfast": "^1.0.3",
     "@supabase/supabase-js": "^2.50.3",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
