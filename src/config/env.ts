@@ -1,5 +1,5 @@
 export function validateEnv(): void {
-  const requiredEnvVars = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
+  const requiredEnvVars = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY"];
   const missingEnvVars = requiredEnvVars.filter((name) => !process.env[name]);
 
   missingEnvVars.forEach((name) => {

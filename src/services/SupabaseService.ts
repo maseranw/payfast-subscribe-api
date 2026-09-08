@@ -116,6 +116,20 @@ export class SupabaseService {
     return data as Subscription[];
   }
 
+  async getSubscriptionOwnerByToken(payfastToken: string): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .from("subscriptions")
+      .select("user_id")
+      .eq("payfast_token", payfastToken)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return data.user_id;
+  }
+
   private async getPlanBillingCycle(planId?: string): Promise<string | null> {
     if (!planId) {
       return null;

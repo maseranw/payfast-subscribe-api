@@ -9,6 +9,7 @@ import { validateEnv } from "./config/env";
 validateEnv();
 
 import { errorMiddleware } from "./middleware/ErrorMiddleware";
+import { requireSubscriptionOwnership } from "./middleware/RequireSubscriptionOwnership";
 import {
   handlePaymentCreation,
   handleCancel,
@@ -38,6 +39,12 @@ const payfastRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+app.use("/api/payfast/cancel/:token/:subscriptionId", requireSubscriptionOwnership);
+app.use("/api/payfast/cancel/:token", requireSubscriptionOwnership);
+app.use("/api/payfast/pause/:token", requireSubscriptionOwnership);
+app.use("/api/payfast/unpause/:token", requireSubscriptionOwnership);
+app.use("/api/payfast/fetch/:token", requireSubscriptionOwnership);
 
 app.use(
   "/api/payfast",

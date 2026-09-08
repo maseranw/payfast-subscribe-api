@@ -43,7 +43,12 @@ To test the full loop locally, run `payfast-sub-app` and this API side by side, 
 - Implements TypeScript for type safety and scalability.
 - Supports CORS for cross-origin requests.
 - Includes error handling middleware.
+- Verifies the caller owns a subscription before letting them cancel, pause, unpause, or fetch it.
 - Deployable
+
+### Subscription ownership verification
+
+`/api/payfast/cancel`, `/pause`, `/unpause`, and `/fetch` require an `Authorization: Bearer <supabase-access-token>` header. The request is rejected (401/403/404) unless that session's user is the owner of the subscription tied to the PayFast token in the URL. This requires `@ngelekanyo/payfast/client` consumers to call `setAuthTokenProvider` (see that package's README) so the header is actually sent. `SUPABASE_ANON_KEY` is required at startup for this check to verify sessions.
 
 ## Prerequisites
 - Node.js (v14 or higher)

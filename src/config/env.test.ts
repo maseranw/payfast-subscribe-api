@@ -40,9 +40,23 @@ describe("validateEnv", () => {
     expect(process.exit).toHaveBeenCalledWith(1);
   });
 
-  it("does not exit when both required variables are set", () => {
+  it("exits with code 1 and logs the missing variable when SUPABASE_ANON_KEY is unset", () => {
     process.env.SUPABASE_URL = "https://example.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
+    process.env.SUPABASE_ANON_KEY = "";
+
+    expect(() => validateEnv()).toThrow("process.exit called with 1");
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining("SUPABASE_ANON_KEY")
+    );
+    expect(process.exit).toHaveBeenCalledWith(1);
+  });
+
+  it("does not exit when all required variables are set", () => {
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
+    process.env.SUPABASE_ANON_KEY = "anon-key";
     process.env.NODE_ENV = "development";
 
     expect(() => validateEnv()).not.toThrow();

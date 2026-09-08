@@ -9,12 +9,16 @@ const supabaseService = new SupabaseService(
 );
 
 export const handlePaymentCreation = async (itnData: PfData): Promise<void> => {
-  try {
-    console.log('Payment received:', itnData);
-    if (itnData.payment_status !== 'COMPLETE') {
-      throw new Error('Payment not completed');
-    }
+  console.log('Payment received:', itnData);
 
+  if (itnData.payment_status !== 'COMPLETE') {
+    console.log(
+      `Payment ${itnData.m_payment_id} received with non-COMPLETE status "${itnData.payment_status}"; acknowledging without activating subscription`
+    );
+    return;
+  }
+
+  try {
     await supabaseService.updateSubscriptionStatus({
       subscriptionId: itnData.m_payment_id,
       payfastPaymentId: itnData.pf_payment_id,
